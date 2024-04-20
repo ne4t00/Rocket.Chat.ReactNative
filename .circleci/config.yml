@@ -485,7 +485,7 @@ jobs:
     <<: *defaults
     executor:
       name: android/android-machine
-      resource-class: pvfhhtru52lblv4cojye34/chat
+      resource-class: 2xlarge
       tag: 2022.12.1
     environment:
       <<: *android-env
@@ -532,7 +532,7 @@ jobs:
     <<: *defaults
     executor:
       name: android/android-machine
-      resource-class: pvfhhtru52lblv4cojye34/chat
+      resource-class: 2xlarge
       tag: 2022.12.1
     parallelism: 4
     steps:
