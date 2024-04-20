@@ -385,7 +385,7 @@ jobs:
     <<: *defaults
     docker:
       - image: cimg/node:16.14
-    resource_class: large
+    resource-class: pvfhhtru52lblv4cojye34/chat
     environment:
       CODECOV_TOKEN: caa771ab-3d45-4756-8e2a-e1f25996fef6
 
@@ -421,7 +421,7 @@ jobs:
     environment:
       <<: *android-env
       <<: *bash-env
-    resource_class: large
+    resource-class: pvfhhtru52lblv4cojye34/chat
     steps:
       - android-build
 
@@ -433,7 +433,7 @@ jobs:
     environment:
       <<: *android-env
       <<: *bash-env
-    resource_class: large
+    resource-class: pvfhhtru52lblv4cojye34/chat
     steps:
       - android-build
 
@@ -444,7 +444,7 @@ jobs:
     environment:
       <<: *android-env
       <<: *bash-env
-    resource_class: large
+    resource-class: pvfhhtru52lblv4cojye34/chat
     steps:
       - android-build
 
@@ -485,7 +485,7 @@ jobs:
     <<: *defaults
     executor:
       name: android/android-machine
-      resource-class: large
+      resource-class: pvfhhtru52lblv4cojye34/chat
       tag: 2022.12.1
     environment:
       <<: *android-env
@@ -532,7 +532,7 @@ jobs:
     <<: *defaults
     executor:
       name: android/android-machine
-      resource-class: large
+      resource-class: pvfhhtru52lblv4cojye34/chat
       tag: 2022.12.1
     parallelism: 4
     steps:
