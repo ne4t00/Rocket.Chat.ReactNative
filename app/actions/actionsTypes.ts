@@ -65,7 +65,7 @@ export const METEOR = createRequestTypes('METEOR_CONNECT', [...defaultTypes, 'DI
 export const LOGOUT = 'LOGOUT'; // logout is always success
 export const DELETE_ACCOUNT = 'DELETE_ACCOUNT';
 export const SNIPPETED_MESSAGES = createRequestTypes('SNIPPETED_MESSAGES', ['OPEN', 'READY', 'CLOSE', 'MESSAGES_RECEIVED']);
-export const DEEP_LINKING = createRequestTypes('DEEP_LINKING', ['OPEN']);
+export const DEEP_LINKING = createRequestTypes('DEEP_LINKING', ['OPEN', 'OPEN_VIDEO_CONF']);
 export const SORT_PREFERENCES = createRequestTypes('SORT_PREFERENCES', ['SET_ALL', 'SET']);
 export const SET_CUSTOM_EMOJIS = 'SET_CUSTOM_EMOJIS';
 export const ACTIVE_USERS = createRequestTypes('ACTIVE_USERS', ['SET', 'CLEAR']);
@@ -96,4 +96,6 @@ export const VIDEO_CONF = createRequestTypes('VIDEO_CONF', [
 	'ACCEPT_CALL',
 	'SET_CALLING'
 ]);
+export const TROUBLESHOOTING_NOTIFICATION = createRequestTypes('TROUBLESHOOTING_NOTIFICATION', ['INIT', 'SET']);
 export const SUPPORTED_VERSIONS = createRequestTypes('SUPPORTED_VERSIONS', ['SET']);
+export const IN_APP_FEEDBACK = createRequestTypes('IN_APP_FEEDBACK', ['SET', 'REMOVE', 'CLEAR']);

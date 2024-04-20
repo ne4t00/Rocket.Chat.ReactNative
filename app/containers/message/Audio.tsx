@@ -5,10 +5,17 @@ import Markdown from '../markdown';
 import MessageContext from './Context';
 import { TGetCustomEmoji } from '../../definitions/IEmoji';
 import { IAttachment, IUserMessage } from '../../definitions';
-import { TDownloadState, downloadMediaFile, getMediaCache } from '../../lib/methods/handleMediaDownload';
+import {
+	TDownloadState,
+	downloadMediaFile,
+	getMediaCache,
+	isDownloadActive,
+	resumeMediaFile
+} from '../../lib/methods/handleMediaDownload';
 import { fetchAutoDownloadEnabled } from '../../lib/methods/autoDownloadPreference';
 import AudioPlayer from '../AudioPlayer';
-import { useAppSelector } from '../../lib/hooks';
+import { useAudioUrl } from './hooks/useAudioUrl';
+import { getAudioUrlToCache } from '../../lib/methods/getAudioUrl';
 
 interface IMessageAudioProps {
 	file: IAttachment;
@@ -23,23 +30,16 @@ interface IMessageAudioProps {
 const MessageAudio = ({ file, getCustomEmoji, author, isReply, style, msg }: IMessageAudioProps) => {
 	const [downloadState, setDownloadState] = useState<TDownloadState>('loading');
 	const [fileUri, setFileUri] = useState('');
-
 	const { baseUrl, user, id, rid } = useContext(MessageContext);
 
-	const { cdnPrefix } = useAppSelector(state => ({
-		cdnPrefix: state.settings.CDN_PREFIX as string
-	}));
+	const audioUrl = useAudioUrl({ audioUrl: file.audio_url });
 
-	const getUrl = () => {
-		let url = file.audio_url;
-		if (url && !url.startsWith('http')) {
-			url = `${cdnPrefix || baseUrl}${file.audio_url}`;
-		}
-		return url;
-	};
-
-	const onPlayButtonPress = () => {
+	const onPlayButtonPress = async () => {
 		if (downloadState === 'to-download') {
+			const isAudioCached = await handleGetMediaCache();
+			if (isAudioCached) {
+				return;
+			}
 			handleDownload();
 		}
 	};
@@ -47,10 +47,9 @@ const MessageAudio = ({ file, getCustomEmoji, author, isReply, style, msg }: IMe
 	const handleDownload = async () => {
 		setDownloadState('loading');
 		try {
-			const url = getUrl();
-			if (url) {
+			if (audioUrl) {
 				const audio = await downloadMediaFile({
-					downloadUrl: `${url}?rc_uid=${user.id}&rc_token=${user.token}`,
+					downloadUrl: getAudioUrlToCache({ token: user.token, userId: user.id, url: audioUrl }),
 					type: 'audio',
 					mimeType: file.audio_type
 				});
@@ -63,9 +62,8 @@ const MessageAudio = ({ file, getCustomEmoji, author, isReply, style, msg }: IMe
 	};
 
 	const handleAutoDownload = async () => {
-		const url = getUrl();
 		try {
-			if (url) {
+			if (audioUrl) {
 				const isCurrentUserAuthor = author?._id === user.id;
 				const isAutoDownloadEnabled = fetchAutoDownloadEnabled('audioPreferenceDownload');
 				if (isAutoDownloadEnabled || isCurrentUserAuthor) {
@@ -79,41 +77,59 @@ const MessageAudio = ({ file, getCustomEmoji, author, isReply, style, msg }: IMe
 		}
 	};
 
+	const handleGetMediaCache = async () => {
+		const cachedAudioResult = await getMediaCache({
+			type: 'audio',
+			mimeType: file.audio_type,
+			urlToCache: audioUrl
+		});
+		if (cachedAudioResult?.exists) {
+			setFileUri(cachedAudioResult.uri);
+			setDownloadState('downloaded');
+		}
+		return !!cachedAudioResult?.exists;
+	};
+
+	const handleResumeDownload = async () => {
+		try {
+			setDownloadState('loading');
+			if (audioUrl) {
+				const videoUri = await resumeMediaFile({
+					downloadUrl: audioUrl
+				});
+				setFileUri(videoUri);
+				setDownloadState('downloaded');
+			}
+		} catch (e) {
+			setDownloadState('to-download');
+		}
+	};
+
 	useEffect(() => {
 		const handleCache = async () => {
-			const cachedAudioResult = await getMediaCache({
-				type: 'audio',
-				mimeType: file.audio_type,
-				urlToCache: getUrl()
-			});
-			if (cachedAudioResult?.exists) {
-				setFileUri(cachedAudioResult.uri);
-				setDownloadState('downloaded');
+			const isAudioCached = await handleGetMediaCache();
+			if (isAudioCached) {
 				return;
 			}
-			if (isReply) {
-				setDownloadState('to-download');
+			if (audioUrl && isDownloadActive(audioUrl)) {
+				handleResumeDownload();
 				return;
 			}
 			await handleAutoDownload();
 		};
-		handleCache();
-	}, []);
+		if (audioUrl) {
+			handleCache();
+		}
+	}, [audioUrl]);
 
 	if (!baseUrl) {
 		return null;
 	}
+
 	return (
 		<>
 			<Markdown msg={msg} style={[isReply && style]} username={user.username} getCustomEmoji={getCustomEmoji} />
-			<AudioPlayer
-				msgId={id}
-				fileUri={fileUri}
-				downloadState={downloadState}
-				disabled={isReply}
-				onPlayButtonPress={onPlayButtonPress}
-				rid={rid}
-			/>
+			<AudioPlayer msgId={id} fileUri={fileUri} downloadState={downloadState} onPlayButtonPress={onPlayButtonPress} rid={rid} />
 		</>
 	);
 };
